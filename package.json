@@ -1,0 +1,16 @@
+{
+  "name": "color-ramp-sort",
+  "displayName": "Color Ramp Sort",
+  "description": "Adds the feature of sorting the active palette by color ramps.",
+  "version": "0.1",
+  "author": { "name": "James Matthew Young",
+              "email": "matsagad@gmail.com",
+              "url": "https://github.com/matsagad" },
+  "license": "CC-BY-4.0",
+  "categories": [ "Scripts" ],
+  "contributes": {
+    "scripts": [
+        { "path": "./color-ramp-sort.lua" }
+    ]
+  }
+}
