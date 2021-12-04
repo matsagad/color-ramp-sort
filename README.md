@@ -1,3 +1,3 @@
 # Color Ramp Sort
 
-An Aseprite extension that sorts the active palette by way of color ramps.
+An Aseprite extension that sorts palettes by way of color ramps. Still a WIP.
