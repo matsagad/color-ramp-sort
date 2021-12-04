@@ -21,6 +21,19 @@ local function num_bits_set(bits)
   return count
 end
 
+local function get_bits_set(bits)
+  local bits_set = {}
+  local index = 1
+  while bits > 0 do
+    if bits & 1 == 1 then
+      table.insert(bits_set, index)
+    end
+    index = index + 1
+    bits = bits >> 1
+  end
+  return bits_set
+end
+
 local function get_unique_colors(table, row, col)
   local bits = 0
   for i = row - 1, (row + 1) do
@@ -62,7 +75,7 @@ function get_similarity_matrix(colors, min_ramp_size, granularity)
     for theta = 0, _MAX_THETA do
       for y_value, hspace in pairs(hspace_pairs) do
         local r = get_space_parameter(color.red, y_value, theta, granularity)
-        increment_cell(hspace[r + 1], theta + 1, 1 << i)
+        increment_cell(hspace[r + 1], theta + 1, 1 << (i - 1))
       end
     end
   end
@@ -92,8 +105,33 @@ function get_similarity_matrix(colors, min_ramp_size, granularity)
     end
   end
 
-  -- TODO: process the projected ramp dictionaries into a similarity matrix, by
-  -- indexing each color according to their order in the original palette.
+  -- Process the projected ramp dictionaries into a similarity matrix where the
+  -- rows and columns are indexed according to the color's order in the original
+  -- palette. The entries correspond to the degree two colors appear together
+  -- in a ramp.
+  local similarity_matrix = {}
+  for i = 1, (#colors - 1) do
+    similarity_matrix[i] = {}
+    local row = similarity_matrix[i]
+    for j = i + 1, #colors do
+      row[j] = 0
+    end
+  end
   
-  return nil
+  -- This degree is given by the sum of all the products of the occurences for
+  -- each ramp in both dictionaries. This is to avoid false cases with
+  -- collinearity in one dimension but not in the other.
+  for ramp, count in pairs(proj_b_ramps) do
+    if proj_g_ramps[ramp] ~= nil then
+      local bits_set = get_bits_set(ramp)
+      for i = 1, (#bits_set - 1) do
+        local row = similarity_matrix[bits_set[i]]
+        for j = i + 1, #bits_set do
+          increment_cell(row, bits_set[j], proj_g_ramps[ramp] * count)
+        end
+      end
+    end
+  end
+
+  return similarity_matrix
 end
