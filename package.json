@@ -10,7 +10,7 @@
   "categories": [ "Scripts" ],
   "contributes": {
     "scripts": [
-        { "path": "./color-ramp-sort.lua" }
+        { "path": "./src/main.lua" }
     ]
   }
 }
