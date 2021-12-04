@@ -107,8 +107,8 @@ function get_similarity_matrix(colors, min_ramp_size, granularity)
 
   -- Process the projected ramp dictionaries into a similarity matrix where the
   -- rows and columns are indexed according to the color's order in the original
-  -- palette. The entries correspond to the degree two colors appear together
-  -- in a ramp.
+  -- palette. The entries correspond to the degree of which two colors appear
+  -- together in a ramp.
   local similarity_matrix = {}
   for i = 1, (#colors - 1) do
     similarity_matrix[i] = {}
@@ -118,20 +118,21 @@ function get_similarity_matrix(colors, min_ramp_size, granularity)
     end
   end
   
-  -- This degree is given by the sum of all the products of the occurences for
-  -- each ramp in both dictionaries. This is to avoid false cases with
-  -- collinearity in one dimension but not in the other.
+  -- This degree is given by the total number of occurences in the dictionaries
+  -- where both colors are in the same ramp.
+  for ramp, count in pairs(proj_g_ramps) do
+    proj_b_ramps[ramp] = proj_b_ramps[ramp] == nil 
+                         and count or proj_b_ramps[ramp] + count
+  end
   for ramp, count in pairs(proj_b_ramps) do
-    if proj_g_ramps[ramp] ~= nil then
-      local bits_set = get_bits_set(ramp)
-      for i = 1, (#bits_set - 1) do
-        local row = similarity_matrix[bits_set[i]]
-        for j = i + 1, #bits_set do
-          increment_cell(row, bits_set[j], proj_g_ramps[ramp] * count)
-        end
+    local bits_set = get_bits_set(ramp)
+    for i = 1, (#bits_set - 1) do
+      local row = similarity_matrix[bits_set[i]]
+      for j = i + 1, #bits_set do
+        increment_cell(row, bits_set[j], count)
       end
     end
   end
-
+  
   return similarity_matrix
 end
