@@ -2,7 +2,7 @@
 An Aseprite extension that sorts palettes by way of color ramps. 
 
 <p align='center'>
-  <img width="40%" src="https://github.com/matsagad/color-ramp-sort/blob/main/demo.gif" alt="Demo Video"/>
+  <img width="50%" src="https://github.com/matsagad/color-ramp-sort/blob/main/demo.gif" alt="Demo Video"/>
 </p>
 
 As constrained by a one-dimensional palette display, it is far from perfect but has its own merits.
@@ -28,7 +28,7 @@ The entire process can be split into three parts: measuring similarity by collin
 
 In the RGB color space, any set of collinear points define a color ramp. As not all palettes have precise ramps, we introduce the notion of being "collinear enough". First, the 3D points are projected onto the y=0 and z=0 planes, and both are parametrized onto a discrete Hough space. The accumulator space is traversed through a window whose dimensions dictate how collinear enough points have to be. The number of times two colors are contained in the same window is recorded onto a matrix, and this measure will be known as their similarity.
 
-We call a tree "skewed-full" if each node has exactly two children and at least one of them is a leaf. A dendrogram is constructed out of the similarity matrix by the average linkage method. It is then cut at certain points when a branch is skewed-full and the minimum ramp length is met. Outliers, colors that do not fit in a ramp, are also recorded and are considered individually or together as a ramp, based on the set configurations.
+We call a tree "skewed-full" if every node except the leaves has exactly two children and at least one of them is a leaf. A dendrogram is constructed out of the similarity matrix by the average linkage method. It is then cut at certain points when a branch is skewed-full and the minimum ramp length is met. Outliers, colors that do not fit in a ramp, are also recorded and are considered individually or together as a ramp, based on the set configurations.
 
 The colors in each ramp are first sorted, and then the ramps are sorted. These are based on the sorting configurations set. Finally, the colors are added to the active palette.
 
