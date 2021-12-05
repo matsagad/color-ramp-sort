@@ -19,7 +19,7 @@ function init(plugin)
   local _SORT_METHOD = {
     ["Hue"] = function(c) return c.hue end,
     ["Saturation"] = function(c) return c.saturation end,
-    ["Brightness"] = function(c) return c.brightness end,
+    ["Brightness"] = function(c) return c.lightness end,
     ["Red"] = function(c) return c.red end,
     ["Green"] = function(c) return c.green end,
     ["Blue"] = function(c) return c.blue end,
