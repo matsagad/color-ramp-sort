@@ -1,5 +1,6 @@
 dofile("./tree.lua")
 
+-- Helper functions
 local function get_key_value_max(row)
   local max_key, max_value = 1, row[1]
   for key, value in pairs(row) do
@@ -11,7 +12,6 @@ local function get_key_value_max(row)
 end
 
 local function get_dendogram(matrix)
-
   -- Make upper-triangular matrix whole
   matrix[#matrix + 1] = {}
   for i = 1, #matrix do
@@ -80,10 +80,94 @@ local function get_dendogram(matrix)
   return root
 end
 
-function get_ramps_with_hierarchical_clustering(similarity_matrix)
-  local root = get_dendogram(similarity_matrix)
+local min_ramp_size, exclude_outliers = 3, true
 
-  -- TODO: cut the dendogram where apprioriate
+local function get_ramps_from_tree(root, ramps, outliers)
+  -- If root is nil, add all outliers as individual ramps
+  if root == nil then
+    for _, outlier in pairs(outliers) do
+      table.insert(ramps, {outlier})
+    end
+    return ramps
+  -- If root is "skewed-full", then all its leaves are part of a single ramp
+  elseif root:is_skewed_full() then
+    table.insert(ramps, root:flatten())
+    for _, outlier in pairs(outliers) do
+      table.insert(ramps, {outlier})
+    end
+    return ramps
+  end
 
-  return nil
+  if not root:is_leaf() then
+    local left_count = root.left:leaves_count()
+    local right_count = root.right:leaves_count()
+
+    -- If exactly one child does not have enough colors to form a ramp, then 
+    -- all its colors are considered outliers, and the other child is traversed
+    -- instead. If both do not have enough colors, their colors are merged.
+    -- If even then there are not enough colors, outliers are included one at a
+    -- time until either the minimum ramp size is reached or there are no more
+    -- outliers (that is if the excluding outliers option is turned off).
+    if left_count < min_ramp_size then
+      if right_count >= min_ramp_size then
+        table.insert(outliers, root.left:flatten())
+        return get_ramps_from_tree(root.right, ramps, outliers)
+      end
+      local merged = merge(root.left:flatten(), root.right:flatten())
+      if left_count + right_count < min_ramp_size then
+        if not exclude_outliers then
+          while #merged < min_ramp_size and #outliers > 0 do
+            table.insert(merged, outliers[#outliers])
+            table.remove(outliers, #outliers)
+          end
+        end
+      end
+      table.insert(ramps, merged)
+      for _, outlier in pairs(outliers) do
+        table.insert(ramps, {outlier})
+      end
+      return ramps
+    end
+    if right_count < min_ramp_size then
+      table.insert(outliers, root.right:flatten())
+      return get_ramps_from_tree(root.left, ramps, outliers)
+    end
+    
+    -- It can be assumed at this point that both children have enough colors to
+    -- form a ramp. If they are "skewed-full" then they are immediately
+    -- flattened and considered as a ramp.
+    local children = {root.left, root.right}
+    for index, child in pairs(children) do
+      if child:is_skewed_full() then
+        table.insert(ramps, child:flatten())
+        return get_ramps_from_tree(children[3 - index], ramps, outliers)
+      end
+    end
+
+    -- If none of the children are "skewed-full" but can have enough colors
+    -- to form a ramp, then each outliers is considered as a single ramp and
+    -- the children are traversed separately.
+    for _, outlier in pairs(outliers) do
+      table.insert(ramps, {outlier})
+    end
+    local ramps_left = get_ramps_from_tree(root.left, ramps, {})
+    return get_ramps_from_tree(root.right, ramps_left, {})
+  end
+
+  for _, outlier in pairs(outliers) do
+    table.insert(ramps, {outlier})
+  end
+  return ramps
+end
+
+function get_clusters(matrix, _min_ramp_size, _exclude_outliers)
+  -- Set global variables
+  min_ramp_size = _min_ramp_size
+  exclude_outliers = _exclude_outliers
+
+  -- Find ramps by hierarchical clustering
+  local root = get_dendogram(matrix)
+  local ramps = get_ramps_from_tree(root, {}, {})
+
+  return ramps
 end
