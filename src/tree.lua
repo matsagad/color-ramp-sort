@@ -41,8 +41,11 @@ function Tree:is_skewed_full()
 end
 
 function Tree:flatten()
+  if self:is_leaf() then
+    return { self.value }
+  end
   local values = {}
-  for _, child in pairs({self.left, self.right}) do
+  for _, child in pairs({ self.left, self.right }) do
     if child ~= nil then
       if child:is_leaf() then
         table.insert(values, child.value)

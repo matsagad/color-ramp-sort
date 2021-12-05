@@ -11,7 +11,7 @@ local function get_key_value_max(row)
   return max_key, max_value
 end
 
-local function get_dendogram(matrix)
+local function get_dendrogram(matrix)
   -- Make upper-triangular matrix whole
   matrix[#matrix + 1] = {}
   for i = 1, #matrix do
@@ -41,8 +41,8 @@ local function get_dendogram(matrix)
     local color_a, similarity = get_key_value_max(max_similarity)
     local color_b = closest_node[color_a]
     local row_a, row_b = matrix[color_a], matrix[color_b]
-
-    -- Connect nodes as part of the dendogram
+    
+    -- Connect nodes as part of the dendrogram
     for color = color_a, color_b, (color_b - color_a) do
       if trees[color] == nil then
         trees[color] = Tree:create(color, nil, nil)
@@ -68,7 +68,7 @@ local function get_dendogram(matrix)
     end
   end
 
-  -- Find the root of the dendogram
+  -- Find the root of the dendrogram
   local root
   for i = 1, #matrix do
     if trees[i] ~= nil then
@@ -80,21 +80,28 @@ local function get_dendogram(matrix)
   return root
 end
 
-local min_ramp_size, exclude_outliers = 3, true
+-- Global configurations
+local min_ramp_size, stack_outliers, exclude_outliers = 2, false, true
+
+local function put_outliers_in_ramps(ramps, outliers)
+  if stack_outliers and next(outliers) ~= nil then
+    table.insert(ramps, outliers)
+  else
+    for _, outlier in pairs(outliers) do
+      table.insert(ramps, { outlier })
+    end
+  end
+end
 
 local function get_ramps_from_tree(root, ramps, outliers)
   -- If root is nil, add all outliers as individual ramps
   if root == nil then
-    for _, outlier in pairs(outliers) do
-      table.insert(ramps, {outlier})
-    end
+    put_outliers_in_ramps(ramps, outliers)
     return ramps
   -- If root is "skewed-full", then all its leaves are part of a single ramp
   elseif root:is_skewed_full() then
     table.insert(ramps, root:flatten())
-    for _, outlier in pairs(outliers) do
-      table.insert(ramps, {outlier})
-    end
+    put_outliers_in_ramps(ramps, outliers)
     return ramps
   end
 
@@ -110,7 +117,7 @@ local function get_ramps_from_tree(root, ramps, outliers)
     -- outliers (that is if the excluding outliers option is turned off).
     if left_count < min_ramp_size then
       if right_count >= min_ramp_size then
-        table.insert(outliers, root.left:flatten())
+        outliers = merge(outliers, root.left:flatten())
         return get_ramps_from_tree(root.right, ramps, outliers)
       end
       local merged = merge(root.left:flatten(), root.right:flatten())
@@ -123,20 +130,18 @@ local function get_ramps_from_tree(root, ramps, outliers)
         end
       end
       table.insert(ramps, merged)
-      for _, outlier in pairs(outliers) do
-        table.insert(ramps, {outlier})
-      end
+      put_outliers_in_ramps(ramps, outliers)
       return ramps
     end
     if right_count < min_ramp_size then
-      table.insert(outliers, root.right:flatten())
+      outliers = merge(outliers, root.right:flatten())
       return get_ramps_from_tree(root.left, ramps, outliers)
     end
     
     -- It can be assumed at this point that both children have enough colors to
     -- form a ramp. If they are "skewed-full" then they are immediately
     -- flattened and considered as a ramp.
-    local children = {root.left, root.right}
+    local children = { root.left, root.right }
     for index, child in pairs(children) do
       if child:is_skewed_full() then
         table.insert(ramps, child:flatten())
@@ -147,26 +152,23 @@ local function get_ramps_from_tree(root, ramps, outliers)
     -- If none of the children are "skewed-full" but can have enough colors
     -- to form a ramp, then each outliers is considered as a single ramp and
     -- the children are traversed separately.
-    for _, outlier in pairs(outliers) do
-      table.insert(ramps, {outlier})
-    end
+    put_outliers_in_ramps(ramps, outliers)
     local ramps_left = get_ramps_from_tree(root.left, ramps, {})
     return get_ramps_from_tree(root.right, ramps_left, {})
   end
 
-  for _, outlier in pairs(outliers) do
-    table.insert(ramps, {outlier})
-  end
+  put_outliers_in_ramps(ramps, outliers)
   return ramps
 end
 
-function get_clusters(matrix, _min_ramp_size, _exclude_outliers)
+function get_clusters(matrix, config)
   -- Set global variables
-  min_ramp_size = _min_ramp_size
-  exclude_outliers = _exclude_outliers
+  min_ramp_size = config[1]
+  stack_outliers = config[2]
+  exclude_outliers = config[4]
 
   -- Find ramps by hierarchical clustering
-  local root = get_dendogram(matrix)
+  local root = get_dendrogram(matrix)
   local ramps = get_ramps_from_tree(root, {}, {})
 
   return ramps

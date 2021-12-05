@@ -53,7 +53,9 @@ local function get_in_binary(bits)
   return num
 end
 
-function get_similarity_matrix(colors, min_ramp_size, granularity)
+function get_similarity_matrix(colors, config)
+  local min_ramp_size, granularity = config[1], config[3]
+
   -- Set up the Hough spaces
   local hspace_b, hspace_g = {}, {}
   for i = 0, (2 * _MAX_R * granularity) do
@@ -71,7 +73,7 @@ function get_similarity_matrix(colors, min_ramp_size, granularity)
   -- setting the bits corresponding to it.
   for i = 1, #colors do
     local color = colors[i]
-    local hspace_pairs = {[color.green] = hspace_b, [color.blue] = hspace_g}
+    local hspace_pairs = { [color.green] = hspace_b, [color.blue] = hspace_g }
     for theta = 0, _MAX_THETA do
       for y_value, hspace in pairs(hspace_pairs) do
         local r = get_space_parameter(color.red, y_value, theta, granularity)
@@ -83,7 +85,7 @@ function get_similarity_matrix(colors, min_ramp_size, granularity)
   -- Candidate ramp dictionaries which takes a color ramp (bitmap) as a key
   -- and the number of "occurences" as its value.
   local proj_b_ramps, proj_g_ramps = {}, {}
-  local ramp_pairs = {{proj_b_ramps, hspace_b}, {proj_g_ramps, hspace_g}}
+  local ramp_pairs = { {proj_b_ramps, hspace_b}, {proj_g_ramps, hspace_g} }
 
   -- Traverse the Hough space through a 3x3 window and check if there are at
   -- least min_ramp_size colors incident on it. If so, we consider a ramp
