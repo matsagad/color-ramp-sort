@@ -16,9 +16,9 @@ function init(plugin)
   }
 
   dlg:check {
-    id = "allow_intersections",
-    text = "Allow Intersections",
-    selected = false,
+    id = "exclude_outliers",
+    text = "Exclude Outliers from Ramps",
+    selected = true,
     focus = false
   }
 
@@ -60,7 +60,7 @@ function init(plugin)
     
     -- Get pop-up dialog configurations
     local min_ramp_size = dlg.data.min_ramp_size
-    local allow_intersections = dlg.data.allow_intersections
+    local allow_rampless = dlg.data.allow_rampless
     local granularity = _GRAN_SIZE[dlg.data.granularity]
 
     -- Extract colors from the active palette
@@ -73,14 +73,14 @@ function init(plugin)
     -- Perform two Hough transforms to find "collinear enough" colors, count
     -- occurences for when colors are incident in the Hough space, and compile
     -- each pairwise count onto an adjacency matrix.
-    local distance_matrix 
-      = get_similarity_matrix(colors, min_ramp_size, granularity)
+    local matrix = get_similarity_matrix(colors, min_ramp_size, granularity)
 
     -- Perform hierarchical clustering to yield pairwise disjoint color ramps
-    local ramps = get_ramps_with_hierarchical_clustering(distance_matrix)
+    local ramps = get_clusters(matrix, min_ramp_size, exclude_outliers)
 
     -- TODO: sort colors in each color ramp, sort the color ramps, then set
     -- the active palette to show the color ramps.
+
     
   end
 end
