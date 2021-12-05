@@ -21,7 +21,7 @@ local function get_dendrogram(matrix)
     end
   end
   for i = 1, #matrix do
-    matrix[i][i] = 0
+    matrix[i][i] = -1
   end
 
   -- Create arrays to note down most similar node
@@ -55,9 +55,9 @@ local function get_dendrogram(matrix)
     -- columns of color_b
     for i = 1, #matrix do
       row_a[i] = (row_a[i] + row_b[i]) / 2
-      row_b[i], matrix[i][color_b] = 0, 0
+      row_b[i], matrix[i][color_b] = -1, -1
     end
-    row_a[color_a] = 0
+    row_a[color_a] = -1
 
     -- Update arrays noting down most similar node
     closest_node[color_b], max_similarity[color_b] = -1, -1
