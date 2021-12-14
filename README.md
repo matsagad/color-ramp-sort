@@ -11,6 +11,7 @@ It is far from perfect but has its own merits. In particular, it struggles to fi
 - Download a zip file of this repository.
 - Open Aseprite and head into **Settings/Preferences > Extensions**.
 - Click on **Add Extension** and load the zip file.
+- If previously configured, make sure **Sprite > Color Mode** is set to **RGB Color**.
 - Under the Options panel, the **Sort By Color Ramp** option should now appear.
 - Configure settings as desired and click on Sort.
 
