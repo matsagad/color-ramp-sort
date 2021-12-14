@@ -91,7 +91,7 @@ function init(plugin)
   dlg:button {
     id = "color_ramp_sort",
     text = "Sort",
-    onclick = function() app.transaction(sort_palette()) end
+    onclick = function() sort_palette() end
   }
 
   dlg:button {
@@ -164,14 +164,18 @@ function init(plugin)
       return ramp_value(a, ext_value, colors) < ramp_value(b, ext_value, colors) 
     end)
     
-    local index = 0
-    for i = 1, #ramps do
-      local ramp = ramps[i]
-      for j = 1, #ramp do
-        palette:setColor(index, colors[ramp[j]])
-        index = index + 1
+    -- Reorder colors in the active palette
+    app.transaction(function()
+        local index = 0
+        for i = 1, #ramps do
+          local ramp = ramps[i]
+          for j = 1, #ramp do
+            palette:setColor(index, colors[ramp[j]])
+            index = index + 1
+          end
+        end
       end
-    end
+    )
   end
 end
 
